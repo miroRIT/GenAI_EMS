@@ -1,0 +1,4 @@
+project_id    = "your-staging-project"
+region        = "us-central1"
+image         = "us-central1-docker.pkg.dev/your-staging-project/emergencypulse/api:staging"
+database_tier = "db-custom-2-7680"

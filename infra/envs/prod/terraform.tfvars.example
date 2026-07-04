@@ -1,0 +1,4 @@
+project_id    = "your-prod-project"
+region        = "us-central1"
+image         = "us-central1-docker.pkg.dev/your-prod-project/emergencypulse/api:prod"
+database_tier = "db-custom-4-15360"

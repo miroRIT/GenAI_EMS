@@ -1,0 +1,4 @@
+project_id    = "your-dev-project"
+region        = "us-central1"
+image         = "us-central1-docker.pkg.dev/your-dev-project/emergencypulse/api:dev"
+database_tier = "db-f1-micro"

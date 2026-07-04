@@ -28,6 +28,31 @@ variable "database_url_secret_resource" {
   description = "Secret Manager resource id containing DATABASE_URL."
 }
 
+variable "database_url_secret_id" {
+  type        = string
+  description = "Secret Manager secret id containing DATABASE_URL."
+}
+
+variable "jwt_secret_resource" {
+  type        = string
+  description = "Secret Manager resource id containing JWT_SECRET."
+}
+
+variable "jwt_secret_id" {
+  type        = string
+  description = "Secret Manager secret id containing JWT_SECRET."
+}
+
+variable "admin_password_hash_secret_resource" {
+  type        = string
+  description = "Secret Manager resource id containing ADMIN_PASSWORD_HASH."
+}
+
+variable "admin_password_hash_secret_id" {
+  type        = string
+  description = "Secret Manager secret id containing ADMIN_PASSWORD_HASH."
+}
+
 variable "cloud_sql_connection_name" {
   type        = string
   description = "Cloud SQL connection name."

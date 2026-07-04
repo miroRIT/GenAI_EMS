@@ -9,9 +9,16 @@ variable "region" {
   description = "GCP region."
 }
 
-variable "image" {
+variable "artifact_repository" {
   type        = string
-  description = "Container image URI."
+  default     = "emergencypulse"
+  description = "Artifact Registry repository id."
+}
+
+variable "image_tag" {
+  type        = string
+  default     = "dev"
+  description = "Container image tag."
 }
 
 variable "database_tier" {

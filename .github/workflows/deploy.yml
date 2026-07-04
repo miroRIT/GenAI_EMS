@@ -7,10 +7,10 @@ on:
         type: choice
         description: Deployment environment
         required: true
-        options: [staging, prod]
+        options: [dev, staging, prod]
       image_tag:
-        description: Container image tag to deploy
-        required: true
+        description: Container image tag to deploy. Defaults to the commit SHA.
+        required: false
 
 permissions:
   contents: read
@@ -22,24 +22,26 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
       - uses: google-github-actions/setup-gcloud@v2
+
       - uses: hashicorp/setup-terraform@v3
-      - name: Terraform plan
-        run: |
-          terraform -chdir=infra/envs/${{ inputs.environment }} init
-          terraform -chdir=infra/envs/${{ inputs.environment }} plan \
-            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
-            -var="image=${{ secrets.ARTIFACT_REGISTRY }}/${{ inputs.image_tag }}"
-      - name: Deploy
+        with:
+          terraform_version: "1.8.5"
+
+      - name: Deploy with Terraform and Cloud Build
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-          ARTIFACT_REGISTRY: ${{ secrets.ARTIFACT_REGISTRY }}
-          DATABASE_URL: placeholder-set-by-secret-manager
+          GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+          ARTIFACT_REPOSITORY: ${{ vars.ARTIFACT_REPOSITORY || 'emergencypulse' }}
+          IMAGE_TAG: ${{ inputs.image_tag || github.sha }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          IMAGE_TAG: ${{ inputs.image_tag }}
+          ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+          BUILD_STRATEGY: cloudbuild
           CONFIRM_PRODUCTION_DEPLOY: ${{ inputs.environment == 'prod' && 'yes' || 'no' }}
         run: ./scripts/deploy.sh ${{ inputs.environment }}

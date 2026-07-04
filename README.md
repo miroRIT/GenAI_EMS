@@ -151,6 +151,50 @@ terraform -chdir=infra/envs/staging apply
 
 Production uses deletion protection, higher minimum Cloud Run instances, and regional Cloud SQL availability by default.
 
+## Automated GCP Deployment
+
+The deployment path is fully automated by `scripts/deploy.sh`. It:
+
+- Initializes Terraform for the selected environment.
+- Enables required GCP APIs.
+- Creates Artifact Registry through Terraform.
+- Creates Secret Manager secret containers through Terraform.
+- Publishes runtime secret versions through `gcloud` so secret values are not stored in Terraform state.
+- Builds and pushes the API image with Cloud Build by default.
+- Applies Terraform for VPC, private service networking, Cloud SQL, Secret Manager, Cloud Run, and the migration job.
+- Executes the Cloud Run migration job.
+- Verifies `/healthz` on the deployed Cloud Run service.
+
+Required local environment variables:
+
+```bash
+export GCP_PROJECT_ID="your-gcp-project"
+export GCP_REGION="us-central1"
+export ARTIFACT_REPOSITORY="emergencypulse"
+export JWT_SECRET="$(openssl rand -hex 32)"
+export ADMIN_PASSWORD_HASH='<bcrypt hash for dispatcher password>'
+```
+
+Deploy staging:
+
+```bash
+gcloud auth login
+./scripts/deploy.sh staging
+```
+
+Deploy production:
+
+```bash
+export CONFIRM_PRODUCTION_DEPLOY=yes
+./scripts/deploy.sh prod
+```
+
+Use local Docker instead of Cloud Build:
+
+```bash
+BUILD_STRATEGY=docker ./scripts/deploy.sh staging
+```
+
 ## CI/CD
 
 `ci.yml` runs on pushes to `main` and pull requests:
@@ -166,10 +210,12 @@ Production uses deletion protection, higher minimum Cloud Run instances, and reg
 
 `deploy.yml` is manually triggered with `workflow_dispatch`.
 
-- Choose `staging` or `prod`.
-- Provide the image tag.
+- Choose `dev`, `staging`, or `prod`.
+- Optionally provide an image tag. It defaults to the Git commit SHA.
 - GitHub Environment approvals should gate production.
-- Required secrets: `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_DEPLOY_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`, `ARTIFACT_REGISTRY`, `JWT_SECRET`.
+- Required secrets: `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_DEPLOY_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`, `JWT_SECRET`, `ADMIN_PASSWORD_HASH`.
+- Optional GitHub environment variables: `GCP_REGION`, `ARTIFACT_REPOSITORY`.
+- The workflow deploys using Terraform and Cloud Build by calling `scripts/deploy.sh`.
 
 ## Automated Steps
 
@@ -180,7 +226,7 @@ Production uses deletion protection, higher minimum Cloud Run instances, and reg
 - Docker build: `make docker-build`
 - Infrastructure validation: `make terraform-validate`
 - Infrastructure provisioning: `scripts/deploy.sh`
-- Database migration: `scripts/db-migrate.sh`
+- Database migration: Cloud Run Job from `scripts/deploy.sh`; local migration via `scripts/db-migrate.sh`
 - Health verification: `curl /healthz` and `curl /readyz`
 
 ## Manual Steps Remaining

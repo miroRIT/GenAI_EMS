@@ -5,3 +5,7 @@ output "service_uri" {
 output "runtime_service_account" {
   value = google_service_account.runtime.email
 }
+
+output "migration_job_name" {
+  value = google_cloud_run_v2_job.migrations.name
+}

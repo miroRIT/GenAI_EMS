@@ -32,22 +32,22 @@ jobs:
       JWT_SECRET: ci-only-secret-value-change-in-real-envs
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
       - run: make install
       - run: make lint
-      - run: alembic upgrade head
-      - run: pytest
+      - run: python -m alembic upgrade head
+      - run: python -m pytest
 
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
         with:
           context: .
           push: false
@@ -59,17 +59,24 @@ jobs:
       run:
         working-directory: infra/envs/dev
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-      - run: terraform fmt -check -recursive ../../
-      - run: terraform init -backend=false
-      - run: terraform validate
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.8.5"
+          terraform_wrapper: false
+      - name: Check Terraform formatting
+        working-directory: .
+        run: terraform fmt -check -diff -recursive infra
+      - name: Initialize Terraform
+        run: terraform init -backend=false
+      - name: Validate Terraform
+        run: terraform validate
 
   dependency-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@0.24.0
+      - uses: actions/checkout@v7
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .

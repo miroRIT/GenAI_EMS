@@ -19,6 +19,6 @@ variable "database_tier" {
 }
 
 variable "deletion_protection" {
-  type        = bool
-  default     = true
+  type    = bool
+  default = true
 }
